@@ -1,16 +1,27 @@
-import { Component } from 'react';
+import styles from "./ImageGalleryItem.module.css";
+import PropTypes from "prop-types";
 
-export default class ImageGalleryItem extends Component {
-  render() {
-    return (
-      <li className="ImageGalleryItem" id={this.props.id}>
-        <img
-          src={this.props.src}
-          alt={this.props.alt}
-          className="ImageGalleryItem-image"
-          onClick={this.props.showImageFunc}
-        />
-      </li>
-    );
-  }
+export function ImageGalleryItem({ src, alt, index, onClick }) {
+  return (
+    <li
+      className={styles.item}
+      onClick={() => onClick({ openModal: true, openModalIndex: index })}
+    >
+      <img src={src} alt={alt} className={styles.image} />
+    </li>
+  );
 }
+
+ImageGalleryItem.prototype = {
+  src: PropTypes.string.isRequired,
+  alt: PropTypes.string.isRequired,
+  index: PropTypes.number.isRequired,
+  onClick: PropTypes.func.isRequired,
+};
+
+ImageGalleryItem.defaultProps = {
+  src: "./",
+  alt: "image",
+  index: 0,
+  onClick: () => {},
+};

@@ -1,33 +1,15 @@
-// const imageFetch = (imageValue, page) => {
-//   const KEY_API = '23070790-299ad5e8dfdc75cc527267990';
-//   const BASE_URL = 'https://pixabay.com/api/';
-
-//   fetch(
-//     `${BASE_URL}&q=${imageValue}&page=${page}&per_page=12&key=${KEY_API}`,
-//   ).then(res => {
-//     return res.json();
-//   });
-// };
-
-// export default imageFetch;
-
-import axios from 'axios';
-
-axios.defaults.baseURL =
-  'https://pixabay.com/api/?image_type=photo&orientation=horizontal';
-const KEY_API = '23070790-299ad5e8dfdc75cc527267990';
-
-async function fetchPixaBayAPI(imageValue, page = 1) {
-  try {
-    const {
-      data: { hits },
-    } = await axios.get(
-      `?&q=${imageValue}&page=${page}&key=${KEY_API}&per_page=12`,
-    );
-    return hits;
-  } catch (error) {
-    console.log(error.message);
-  }
+function fetchImages(value, page) {
+  const BASE_URL = "https://pixabay.com/api/";
+  const API_KEY = "22993210-edd192b19fd9d2ee0b0d8e9c4";
+  return fetch(
+    `${BASE_URL}?q=${value}&page=${page}&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=12`
+  )
+    .then((response) => response.json())
+    .then((data) => ({ images: data.hits, totalHits: data.totalHits }));
 }
 
-export default fetchPixaBayAPI;
+const api = {
+  fetchImages,
+};
+
+export default api;
