@@ -1,114 +1,106 @@
-import { Component } from "react";
-import "react-loader-spinner/dist/loader/css/react-spinner-loader.css";
-import styles from "./ImageStateCar.module.css";
-import ImageGallery from "../ImageGallery/ImageGallery";
-import UserLoader from "../UserLoader/UserLoader";
-import ImageApi from "../services/pixabay";
-import ImageError from "./ImageError";
-import Status from "../services/status";
-import Button from "../Button";
-import Modal from "../Modal";
+import { useState, useEffect } from 'react';
+import 'react-loader-spinner/dist/loader/css/react-spinner-loader.css';
+import styles from './ImageStateCar.module.css';
+import ImageGallery from '../ImageGallery/ImageGallery';
+import UserLoader from '../UserLoader/UserLoader';
+import ImageApi from '../services/Pixabay';
+import ImageError from './ImageError';
+import Status from '../services/status';
+import Button from '../Button';
+import Modal from '../Modal';
 
-class ImageStateCar extends Component {
-  state = {
-    images: null,
-    page: 1,
-    openModal: false,
-    openModalIndex: undefined,
-    status: Status.IDLE,
-    scrollHeight: 0,
-    totalHits: null,
-  };
+const ImageStateCar = ({ queryValue, page: firstPage }) => {
+  const [images, setImages] = useState(null);
+  const [page, setPage] = useState(firstPage);
+  const [openModal, setOpenModal] = useState(false);
+  const [openModalIndex, setOpenModalIndex] = useState(undefined);
+  const [status, setStatus] = useState(Status.IDLE);
+  const [scrollHeight, setScrollHeight] = useState(0);
+  const [totalHits, setTotalHits] = useState(null);
+  const [error, setError] = useState();
 
-  componentDidUpdate(prevProps, prevState) {
-    const prevValue = prevProps.queryValue;
-    const nextValue = this.props.queryValue;
-
-    if (prevValue !== nextValue) {
-      this.setState({ status: Status.PENDING, page: 1, scrollHeight: 0 });
+  useEffect(() => {
+    if (queryValue) {
+      console.log('queryValue', queryValue);
+      setStatus(Status.PENDING);
+      setScrollHeight(0);
 
       setTimeout(() => {
-        ImageApi.fetchImages(nextValue)
+        ImageApi.fetchImages(queryValue, page)
           .then(({ images, totalHits }) => {
-            this.setState({
-              images,
-              status: images.length > 0 ? Status.RESOLVED : Status.REJECTED,
-              totalHits,
-            });
+            setImages(images);
+
+            const newStatus =
+              images.length > 0 ? Status.RESOLVED : Status.REJECTED;
+            setStatus(newStatus);
+            setTotalHits(totalHits);
           })
-          .catch((error) => this.setState({ error, status: Status.REJECTED }));
+          .catch(error => {
+            setStatus(Status.REJECTED);
+            setError(error);
+          });
       }, 500);
     }
+  }, [queryValue]);
 
-    if (prevState.openModal === this.state.openModal) {
+  useEffect(() => {
+    if (page > 1)
       window.scrollTo({
-        top: this.state.scrollHeight,
-        behavior: "smooth",
+        top: scrollHeight,
+        behavior: 'smooth',
       });
-    }
-  }
+  }, [page]);
 
-  loadMore = () => {
-    const { page } = this.state;
+  const loadMore = () => {
+    const currentScrollHeight = document.documentElement.scrollHeight - 150;
 
-    ImageApi.fetchImages(this.props.queryValue, page + 1)
-      .then(({ images }) => {
-        this.setState((prevState) => ({
-          images: [...prevState.images, ...images],
-          status: Status.RESOLVED,
-          scrollHeight: document.documentElement.scrollHeight - 150,
-          page: page + 1,
-        }));
+    ImageApi.fetchImages(queryValue, page + 1)
+      .then(({ images: fetchImages }) => {
+        setImages([...images, ...fetchImages]);
+        setStatus(Status.RESOLVED);
+        setScrollHeight(currentScrollHeight);
+        setPage(page + 1);
       })
-      .catch((error) => this.setState({ error, status: Status.REJECTED }));
-  };
-
-  closeModal = (event) => {
-    console.log(this.state.scrollHeight);
-    if (event.currentTarget === event.target) {
-      this.setState({
-        openModal: false,
+      .catch(error => {
+        setError(error);
+        setStatus(Status.REJECTED);
       });
-    }
   };
 
-  render() {
-    const { images, status, openModal, openModalIndex, page, totalHits } =
-      this.state;
+  const closeModal = () => setOpenModal(false);
 
-    if (status === "idle") {
-      return <p className={styles.text}>Введите Ваш запрос</p>;
-    }
-
-    if (status === "pending") {
-      return <UserLoader />;
-    }
-
-    if (status === "rejected") {
-      return <ImageError />;
-    }
-
-    if (status === "resolved") {
-      return (
-        <>
-          <ImageGallery
-            images={images}
-            onClick={(modalOpen) => this.setState(modalOpen)}
-          />
-          {images.length > 0 && page !== Math.ceil(totalHits / 12) && (
-            <Button onClick={this.loadMore} />
-          )}
-
-          {openModal && (
-            <Modal
-              closeModal={this.closeModal}
-              image={images[openModalIndex]}
-            />
-          )}
-        </>
-      );
-    }
+  if (status === 'idle') {
+    return <p className={styles.text}>Введите Ваш запрос</p>;
   }
-}
+
+  if (status === 'pending') {
+    return <UserLoader />;
+  }
+
+  if (status === 'rejected') {
+    return <ImageError />;
+  }
+
+  if (status === 'resolved') {
+    return (
+      <>
+        <ImageGallery
+          images={images}
+          onClick={modalOpen => {
+            setOpenModalIndex(modalOpen);
+            setOpenModal(true);
+          }}
+        />
+        {images.length > 0 && page !== Math.ceil(totalHits / 12) && (
+          <Button onClick={loadMore} />
+        )}
+
+        {openModal && (
+          <Modal closeModal={closeModal} image={images[openModalIndex]} />
+        )}
+      </>
+    );
+  }
+};
 
 export default ImageStateCar;

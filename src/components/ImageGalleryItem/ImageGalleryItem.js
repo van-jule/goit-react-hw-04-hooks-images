@@ -1,12 +1,9 @@
-import styles from "./ImageGalleryItem.module.css";
-import PropTypes from "prop-types";
+import styles from './ImageGalleryItem.module.css';
+import PropTypes from 'prop-types';
 
 export function ImageGalleryItem({ src, alt, index, onClick }) {
   return (
-    <li
-      className={styles.item}
-      onClick={() => onClick({ openModal: true, openModalIndex: index })}
-    >
+    <li className={styles.item} onClick={() => onClick(index)}>
       <img src={src} alt={alt} className={styles.image} />
     </li>
   );
@@ -20,8 +17,8 @@ ImageGalleryItem.prototype = {
 };
 
 ImageGalleryItem.defaultProps = {
-  src: "./",
-  alt: "image",
+  src: './',
+  alt: 'image',
   index: 0,
   onClick: () => {},
 };
